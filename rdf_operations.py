@@ -31,8 +31,8 @@ def execute_sparql_query(graph, booker_name, num_places, num_bedrooms, max_lake_
             FILTER (?distanceToCity <= {max_city_dist}) .
             FILTER (?nearestCity = "{city}") .
             FILTER (?availableDays >= {required_days}) .
-            FILTER (str(?startDate) = "{start_date}") .
-            FILTER (?maxShiftDays >= {max_shift_days})
+            FILTER (str(?startDate) <= "{start_date}") .
+            FILTER (?maxShiftDays >= {max_shift_days}).
         }}
     """
     return graph.query(sparql_query)

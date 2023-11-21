@@ -44,13 +44,22 @@ async def search_cottages(
     results = execute_sparql_query(ontology, booker_name, num_places, num_bedrooms,
                                    max_lake_dist, city, max_city_dist, required_days,
                                    start_date, max_shift_days)
-    results_html = "<table><tr><th>Booking Number</th><th>Booker Name</th><th>Cottage Name</th><th>Nearest City</th><th>Address</th><th>Places</th><th>Bedrooms</th><th>Distance to Lake</th><th>Start Date</th><th>Available Days</th><th>Image Url</th></tr>"
-    for result in results:
+    sorted_results = sorted(results, key=lambda x: x[7])
+    # Inside the search_cottages function
+    results_html = "<table><tr><th>Index</th><th>Booking Number</th><th>Booker Name</th><th>Address</th><th>Nearest City (Distance in km)</th><th>Places</th><th>Bedrooms</th><th>Distance to Lake (Metres)</th><th>Start Date</th><th>Available Days</th><th>Image Url</th></tr>"
+    for index, result in enumerate(sorted_results, start=1):
         booking_number = str(uuid.uuid4())
-        address, places, bedrooms, distance_to_lake, nearest_city, image_url, start_date, distance_to_city, available_days, max_shift_days = result
-        formatted_result = [booking_number, booker_name, str(address), str(image_url), str(places), str(bedrooms), str(distance_to_lake), str(nearest_city), str(distance_to_city), str(available_days), str(start_date)]
+        # Unpack the result tuple based on the SPARQL query order
+        _, address, places, bedrooms, distance_to_lake, nearest_city, image_url, start_date, available_days, distance_to_city = result
+        nearest_city_with_distance = f"{nearest_city} ({distance_to_city} km)"
+        image_tag = f'<img src="{image_url}" alt="Cottage Image" style="width:100px; height:auto;">'
+        formatted_result = [str(index), booking_number, booker_name, str(address), nearest_city_with_distance, str(places), str(bedrooms),
+                            str(distance_to_lake), str(start_date), str(available_days), image_tag]
         row = "<tr>" + "".join(f"<td>{field}</td>" for field in formatted_result) + "</tr>"
         results_html += row
+    results_html += "</table>"
+
+
     results_html += "</table>"
 
     final_html_content = f"""

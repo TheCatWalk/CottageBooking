@@ -41,7 +41,7 @@ def create_cottage_instance(g, instance_number):
     g.add((cottage_uri, EX.startDate, Literal(generate_random_date(month_year))))
     g.add((cottage_uri, EX.imageURL, Literal(f"http://example.org/images/cottage{instance_number}.jpg")))
 
-def update_ontology(number_of_instances, file_path="ontology.rdf"):
+def update_ontology(number_of_instances, file_path="old.rdf"):
     """ Update the ontology with a specified number of new cottage instances. """
     g = Graph()
     g.bind("ex", EX)

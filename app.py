@@ -1,92 +1,94 @@
+from datetime import timedelta, datetime
 from fastapi import FastAPI, Form
 from fastapi.responses import HTMLResponse
 from rdf_operations import load_rdf_data, execute_sparql_query
 import uvicorn
 import uuid
 
-
 app = FastAPI()
-ontology = load_rdf_data("ontology.rdf")
+ontology = load_rdf_data("new.rdf")  # Updated to load new.rdf
 
 @app.get("/", response_class=HTMLResponse)
 async def get_search_form():
     html_content = """
-    <html>
-    <head>
-        <title>Cottage Booking</title>
-        <!-- Styles and other head elements -->
-    </head>
-    <body>
-        <h2>Search for Cottage Bookings</h2>
-        <form action="/search_cottages" method="post">
-            Name of Booker: <input type="text" name="booker_name" value="Test Booker"><br>
-            Number of Places (People) [1-5]: <input type="number" name="num_places" value="1" min="1" max="5"><br>
-            Number of Bedrooms [1-4]: <input type="number" name="num_bedrooms" value="1" min="1" max="4"><br>
-            Max Distance to Lake (meters) [10-1000]: <input type="number" name="max_lake_dist" value="1000" min="10" max="1000"><br>
-            City [Helsinki, Jyvaskyla, or Tampere]: <input type="text" name="city" value="Jyvaskyla"><br>
-            Max Distance to City (kilometers) [6-20]: <input type="number" name="max_city_dist" value="20"><br>
-            Required Number of Days: <input type="number" name="required_days" value="1"><br>
-            Starting Day of Booking (yyyy-mm-dd): <input type="text" name="start_date" value="2024-02-06"><br>
-            Max Possible Shift of Start Day (+/- n days): <input type="number" name="max_shift_days" value="7"><br>
-            <input type="submit" value="Search">
-        </form>
-    </body>
-    </html>
+        <html>
+        <head>
+            <title>Cottage Booking</title>
+            <!-- Styles and other head elements -->
+        </head>
+        <body>
+            <h2>Search for Cottage Bookings</h2>
+            <form action="/search_cottages" method="post">
+                Name of Booker: <input type="text" name="booker_name" value="Test Booker"><br>
+                Number of Places (People) [1-10]: <input type="number" name="numberOfPlaces" value="4" min="1" max="10"><br>
+                Number of Bedrooms [1-5]: <input type="number" name="numberOfBedrooms" value="3" min="1" max="5"><br>
+                City [e.g., Jyvaskyla, Rovaniemi, Oulu]: <input type="text" name="cityName" value="Jyvaskyla"><br>
+                Max Distance to City (kilometers) [100-500]: <input type="number" name="distanceFromCity" value="300" min="100" max="500"><br>
+                Max Distance to Lake (meters) [10-100]: <input type="number" name="distanceFromLake" value="30" min="10" max="100"><br>
+                Booking Start Date (yyyy-mm-dd): <input type="text" name="startDate" value="2023-07-01"><br>
+                Booking Duration (in days): <input type="number" name="duration" value="5" min="1" max="30"><br>
+                Max Shift Days (+/- days): <input type="number" name="maxShiftDays" value="2" min="0" max="1000"><br>
+                <input type="submit" value="Search">
+            </form>
+        </body>
+        </html>
     """
     return HTMLResponse(content=html_content)
 
 @app.post("/search_cottages", response_class=HTMLResponse)
 async def search_cottages(
-        booker_name: str = Form(...), num_places: int = Form(...),
-        num_bedrooms: int = Form(...), max_lake_dist: float = Form(...),
-        city: str = Form(...), max_city_dist: float = Form(...),
-        required_days: int = Form(...), start_date: str = Form(...), max_shift_days: str = Form(...)):
-    results = execute_sparql_query(ontology, booker_name, num_places, num_bedrooms,
-                                   max_lake_dist, city, max_city_dist, required_days,
-                                   start_date, max_shift_days)
-    sorted_results = sorted(results, key=lambda x: x[7])
-    # Inside the search_cottages function
-    results_html = "<table><tr><th>Index</th><th>Booking Number</th><th>Booker Name</th><th>Address</th><th>Nearest City (Distance in km)</th><th>Places</th><th>Bedrooms</th><th>Distance to Lake (Metres)</th><th>Start Date</th><th>Available Days</th><th>Image Url</th></tr>"
-    for index, result in enumerate(sorted_results, start=1):
-        booking_number = str(uuid.uuid4())
-        # Unpack the result tuple based on the SPARQL query order
-        _, address, places, bedrooms, distance_to_lake, nearest_city, image_url, start_date, available_days, distance_to_city = result
-        nearest_city_with_distance = f"{nearest_city} ({distance_to_city} km)"
-        image_tag = f'<img src="{image_url}" alt="Cottage Image" style="width:100px; height:auto;">'
-        formatted_result = [str(index), booking_number, booker_name, str(address), nearest_city_with_distance, str(places), str(bedrooms),
-                            str(distance_to_lake), str(start_date), str(available_days), image_tag]
-        row = "<tr>" + "".join(f"<td>{field}</td>" for field in formatted_result) + "</tr>"
-        results_html += row
-    results_html += "</table>"
+        booker_name: str = Form(...),
+        numberOfPlaces: int = Form(...),
+        numberOfBedrooms: int = Form(...),
+        distanceFromLake: float = Form(...),
+        cityName: str = Form(...),
+        distanceFromCity: float = Form(...),
+        startDate: str = Form(...),
+        duration: int = Form(...),
+        maxShiftDays: int = Form(...)):
 
+    results = execute_sparql_query(
+        ontology, booker_name, numberOfPlaces, numberOfBedrooms, distanceFromLake,
+        cityName, distanceFromCity, startDate, duration, maxShiftDays
+    )
+    response_html = "<h2>Search Results</h2>"
+    index = 1  # Initialize an index counter
+    for row in results:
+        start_date_obj = datetime.strptime(startDate, '%Y-%m-%d')
+        user_start_date = start_date_obj - timedelta(days=maxShiftDays)
+        user_end_date = start_date_obj + timedelta(days=maxShiftDays)
 
-    results_html += "</table>"
+        current_date = user_start_date
+        while current_date <= user_end_date:
+            cottage_start_date = datetime.strptime(row['startDate'], '%Y-%m-%d')
+            cottage_end_date = datetime.strptime(row['endDate'], '%Y-%m-%d')
 
-    final_html_content = f"""
-    <html>
-    <head>
-        <title>Cottage Booking</title>
-        <style>
-            table, th, td {{
-                border: 1px solid black;
-                border-collapse: collapse;
-            }}
-            th, td {{
-                padding: 5px;
-                text-align: left;
-            }}
-        </style>
-    </head>
-    <body>
-        <h2>Search for Cottage Bookings</h2>
-        <form action="/search_cottages" method="post">
-            <!-- Form fields here -->
-        </form>
-        {results_html}
-    </body>
-    </html>
-    """
-    return HTMLResponse(content=final_html_content)
+            if cottage_start_date <= current_date <= cottage_end_date:
+                booking_number = uuid.uuid4()
+                response_html += f"<div><p><strong>Index: {index}</strong></p><hr>"
+                response_html += f"<p>Booker Name: {booker_name}</p>"
+                response_html += f"<p>Booking Number: {booking_number}</p>"
+                # Display the image using the image URL
+                if 'hasImageURL' in row and row['hasImageURL']:
+                    response_html += f'<p>Image: <img src="{row["hasImageURL"]}" alt="Cottage Image" style="width:100px;height:100px;"></p>'
+                response_html += f"<p>Address: {row['hasAddress']}</p>"
+                response_html += f"<p>Number of Places: {row['numberOfPlaces']}</p>"
+                response_html += f"<p>Number of Bedrooms: {row['numberOfBedrooms']}</p>"
+                response_html += f"<p>City: {row['cityName']}</p>"
+                response_html += f"<p>Distance to City: {row['distanceFromCity']}</p>"
+                response_html += f"<p>Distance to Lake: {row['distanceFromLake']}</p>"
+                # Calculate and display the booking period
+                booking_start_date = current_date
+                booking_end_date = booking_start_date + timedelta(days=duration - 1)
+                date_label = "Booking Start Date" if current_date == start_date_obj else "Shifted Booking Start Date"
+                response_html += f"<p>{date_label}: {booking_start_date.strftime('%Y-%m-%d')}</p>"
+                response_html += f"<p>Booking Period: {duration} days ({booking_start_date.strftime('%Y-%m-%d')} to {booking_end_date.strftime('%Y-%m-%d')})</p>"
+                response_html += "</div><hr>"
+                index += 1  # Increment the index for each row
 
+            current_date += timedelta(days=1)
+
+    return HTMLResponse(content=response_html)
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
+

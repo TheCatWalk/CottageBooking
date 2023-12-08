@@ -1,0 +1,68 @@
+@prefix cot: <http://users.jyu.fi/~kumapmxw/cottage-ontology.owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+cot:cottage01
+    rdf:type cot:cottage ;
+    cot:cottageID "C001";
+    cot:hasImageURL <https://featuringfinland.com/wp-content/uploads/2021/05/Finland_summer_cottage_sauna_1.jpg>;
+    cot:hasAddress "No.28, Taitoniekantie, Jyvaskyla" ;
+    cot:numberOfPlaces 4 ;
+    cot:numberOfBedrooms 3 ;
+    cot:distanceFromLake 30; #m
+    cot:cityName "Jyvaskyla" ;
+    cot:distanceFromCity 300 ; #km
+    cot:startDate "2023-07-01"^^xsd:date ;
+    cot:endDate "2023-09-01"^^xsd:date .
+
+cot:cottage02
+    rdf:type cot:cottage ;
+    cot:cottageID "C002";
+    cot:hasImageURL <https://finland.fi/wp-content/uploads/2015/05/4106-carolina_maia_550px_2-jpg.jpg>;
+    cot:hasAddress "No.105, Nuortenkatu, Rovaniemi" ;
+    cot:numberOfPlaces 8 ;
+    cot:numberOfBedrooms 5 ;
+    cot:distanceFromLake 20; #m
+    cot:cityName "Rovaniemi" ;
+    cot:distanceFromCity 200 ; #km
+    cot:startDate "2023-07-15"^^xsd:date ;
+    cot:endDate "2023-09-01"^^xsd:date .
+
+cot:cottage03
+    rdf:type cot:cottage ;
+    cot:cottageID "C003";
+    cot:hasImageURL <https://www.suomi-holiday.fi/images/background_amp_lakeland_en.jpg>;
+    cot:hasAddress "No.32, Isokatu, Oulu" ;
+    cot:numberOfPlaces 6 ;
+    cot:numberOfBedrooms 3 ;
+    cot:distanceFromLake 30; #m
+    cot:cityName "Oulu" ;
+    cot:distanceFromCity 300 ; #km
+    cot:startDate "2023-08-01"^^xsd:date ;
+    cot:endDate "2023-09-30"^^xsd:date .
+
+cot:cottage04
+    rdf:type cot:cottage ;
+    cot:cottageID "C004";
+    cot:hasImageURL <https://www.shutterstock.com/image-photo/finnish-wooden-house-among-trees-260nw-1627339324.jpg>;
+    cot:hasAddress "No.56, Nekalantie, Tampere" ;
+    cot:numberOfPlaces 9 ;
+    cot:numberOfBedrooms 5 ;
+    cot:distanceFromLake 30; #m
+    cot:cityName "Tampere" ;
+    cot:distanceFromCity 300 ; #km
+    cot:startDate "2023-08-15"^^xsd:date ;
+    cot:endDate "2023-09-15"^^xsd:date .
+
+cot:cottage05
+    rdf:type cot:cottage ;
+    cot:cottageID "C005";
+    cot:hasImageURL <https://visithame.fi/wp-content/uploads/2019/12/visit_hame_mokki_sauna_jarvenranta_jarvi_punainentupa_tupa_kesamokki_vuokraamokki.jpg>;
+    cot:hasAddress "No.67, Ratapihankatu, Turku" ;
+    cot:numberOfPlaces 9 ;
+    cot:numberOfBedrooms 5 ;
+    cot:distanceFromLake 20; #m
+    cot:cityName "Turku" ;
+    cot:distanceFromCity 200 ; #km
+    cot:startDate "2023-08-01"^^xsd:date ;
+    cot:endDate "2023-09-15"^^xsd:date .

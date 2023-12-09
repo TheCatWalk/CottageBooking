@@ -1,6 +1,8 @@
-from rdflib import Graph, Literal
+from rdflib import Graph, Literal, Namespace, URIRef
+from rdflib.namespace import RDF
 from datetime import datetime, timedelta
 import re
+
 
 def load_rdf_data(file_path):
     graph = Graph()
@@ -15,7 +17,7 @@ def calculate_date_range(start_date_str, shift_days_str):
     start_date_latest = start_date + timedelta(days=shift_days)
     return start_date_earliest.strftime('%Y-%m-%d'), start_date_latest.strftime('%Y-%m-%d')
 
-def execute_sparql_query(graph, booker_name, numberOfPlaces, numberOfBedrooms, distanceFromLake, cityName, distanceFromCity, startDate, duration, maxShiftDays):
+def execute_sparql_query(graph, bookerName, numberOfPlaces, numberOfBedrooms, cityName, distanceFromCity, distanceFromLake, startDate, duration, shift):
     sparql_query = f"""
         PREFIX cot: <http://users.jyu.fi/~kumapmxw/cottage-ontology.owl#>
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
@@ -43,32 +45,40 @@ def execute_sparql_query(graph, booker_name, numberOfPlaces, numberOfBedrooms, d
     results = graph.query(sparql_query)
     filtered_results = []
 
-    start_date_obj = datetime.strptime(startDate, '%Y-%m-%d')
+    # Adjusting the logic to use startDate and shift from the RIG
+    start_date_obj = datetime.strptime(startDate, '%Y-%m-%dT%H:%M:%S')
+    user_start_date = start_date_obj - timedelta(days=shift)
+    user_end_date = start_date_obj + timedelta(days=shift)
+
     for row in results:
         cottage_start_date = datetime.strptime(row['startDate'], '%Y-%m-%d')
         cottage_end_date = datetime.strptime(row['endDate'], '%Y-%m-%d')
-        available_duration = (cottage_end_date - cottage_start_date).days
 
-        # Calculate the user's flexible booking period
-        user_start_date = start_date_obj - timedelta(days=maxShiftDays)
-        user_end_date = start_date_obj + timedelta(days=maxShiftDays)
-
-        # Check for overlap
-        if ((cottage_start_date <= user_end_date) and (cottage_end_date >= user_start_date)) and available_duration >= duration:
-            row_data = {
-                'cottage': row['cottage'],
-                'hasAddress': row['hasAddress'],
-                'numberOfPlaces': row['numberOfPlaces'],
-                'numberOfBedrooms': row['numberOfBedrooms'],
-                'distanceFromLake': row['distanceFromLake'],
-                'cityName': row['cityName'],
-                'hasImageURL': row['hasImageURL'],
-                'startDate': row['startDate'],
-                'endDate': row['endDate'],
-                'distanceFromCity': row['distanceFromCity'],
-                'calculated_duration': available_duration  # Add calculated duration
-            }
-            filtered_results.append(row_data)
+        if cottage_start_date <= user_end_date and cottage_end_date >= user_start_date:
+            filtered_results.append(row)
 
     return filtered_results
 
+
+def parse_rig(rig_graph):
+    # Define the namespaces based on RDG.ttl and new.rdf
+    COT = Namespace("http://users.jyu.fi/~kumapmxw/cottage-ontology.owl#")
+    SSWAP = Namespace("http://sswapmeet.sswap.info/sswap/")
+    REQUEST = Namespace("http://example.org/request/")
+
+    # Find the request node in the RIG
+    request_node = rig_graph.value(predicate=RDF.type, object=REQUEST.BookingRequest, any=False)
+
+    # Extract parameters from the RIG
+    params = {
+        'bookerName': str(rig_graph.value(subject=request_node, predicate=REQUEST.bookerName)),
+        'numberOfPlaces': int(rig_graph.value(subject=request_node, predicate=REQUEST.numberOfPlaces)),
+        'numberOfBedrooms': int(rig_graph.value(subject=request_node, predicate=REQUEST.numberOfBedrooms)),
+        'cityName': str(rig_graph.value(subject=request_node, predicate=REQUEST.cityName)),
+        'distanceFromCity': int(rig_graph.value(subject=request_node, predicate=REQUEST.distanceFromCity)),
+        'distanceFromLake': int(rig_graph.value(subject=request_node, predicate=REQUEST.distanceFromLake)),
+        'startDate': str(rig_graph.value(subject=request_node, predicate=REQUEST.startDate)),
+        'duration': int(rig_graph.value(subject=request_node, predicate=REQUEST.duration)),
+        'shift': int(rig_graph.value(subject=request_node, predicate=REQUEST.shift))
+    }
+    return params

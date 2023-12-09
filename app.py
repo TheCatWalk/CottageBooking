@@ -1,12 +1,15 @@
 from datetime import timedelta, datetime
-from fastapi import FastAPI, Form
+from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse
-from rdf_operations import load_rdf_data, execute_sparql_query
+from rdf_operations import load_rdf_data, parse_rig, execute_sparql_query
+from rdflib import Graph
 import uvicorn
 import uuid
 
+
+
 app = FastAPI()
-ontology = load_rdf_data("new.rdf")  # Updated to load new.rdf
+ontology = load_rdf_data("new.rdf")  # Ensure this loads your RDF database
 
 @app.get("/", response_class=HTMLResponse)
 async def get_search_form():
@@ -89,6 +92,28 @@ async def search_cottages(
             current_date += timedelta(days=1)
 
     return HTMLResponse(content=response_html)
+
+
+@app.post("/invoke")
+async def invoke_service(request: Request):
+    # Read the incoming RIG data
+    rig_data = await request.body()
+    rig_data = rig_data.decode('utf-8')  # Convert bytes to string
+
+    # Parse the RIG
+    rig_graph = Graph().parse(data=rig_data, format="turtle")
+    parsed_params = parse_rig(rig_graph)
+
+    # Use parsed parameters to query the RDF database
+    results = execute_sparql_query(ontology, **parsed_params)
+
+    # TODO: Generate RRG based on results
+    # This will be implemented in the next step
+
+    return {"status": "success", "results": results}
+
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
 

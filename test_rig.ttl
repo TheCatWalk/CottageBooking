@@ -1,0 +1,14 @@
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix request: <http://example.org/request/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+_:BookingRequest rdf:type request:BookingRequest ;
+                request:booker_name "John Doe" ;
+                request:numberOfPlaces "4"^^xsd:int ;
+                request:numberOfBedrooms "2"^^xsd:int ;
+                request:cityName "Jyvaskyla" ;
+                request:distanceFromCity "300"^^xsd:int ;
+                request:distanceFromLake "30"^^xsd:int ;
+                request:startDate "2023-07-01T00:00:00"^^xsd:dateTime ;
+                request:duration "5"^^xsd:int ;
+                request:shift "2"^^xsd:int .

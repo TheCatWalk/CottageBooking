@@ -1,0 +1,51 @@
+@prefix cot: <http://users.jyu.fi/~kumapmxw/cottage-ontology.owl#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix sswap: <http://sswapmeet.sswap.info/sswap/> .
+
+resource:CottageBooking
+    rdf:type sswap:Resource, cot:CottageBookingService ;
+    sswap:providedBy resource:resourceProvider ;
+    sswap:name "Aurora Cottage Booking Service" ;
+    sswap:oneLineDescription "A service you can search and book cottages" ;
+
+    sswap:operatesOn [
+        rdf:type sswap:Graph ;
+
+        sswap:hasMapping [
+            rdf:type sswap:Subject, request:BookingRequest;
+            request:bookerName "" ;
+            request:numberOfPlaces ""^^xsd:int ;
+            request:numberOfBedrooms ""^^xsd:int ;
+            request:cityName "" ;
+            request:distanceFromCity ""^^xsd:int ;
+            request:distanceFromLake ""^^xsd:int ;
+            request:startDate ""^^xsd:dateTime ;
+            request:duration ""^^xsd:int ;
+            request:shift ""^^xsd:int ;
+
+            sswap:mapsTo [
+                rdf:type sswap:Object, cot:BookingCottage ;
+                cot:bookerName "" ;
+                cot:hasBookingID "" ;
+                cot:hasCottage [
+                    rdf:type cot:Cottage ;
+                    cot:hasImageURL "" ;
+                    cot:hasAddress "" ;
+                    cot:numberOfPlaces ""^^xsd:int ;
+                    cot:numberOfBedrooms ""^^xsd:int ;
+                    cot:cityName "" ;
+                    cot:distanceFromCity ""^^xsd:int ;
+                    cot:distanceFromLake ""^^xsd:int ;
+                ];
+                cot:bookingPeriod[
+                    rdf:type cot:BookingPeriod ;
+                    cot:startDate ""^^xsd:dateTime ;
+                    cot:endDate ""^^xsd:dateTime ;
+                ];
+            ]
+        ]
+    ] .

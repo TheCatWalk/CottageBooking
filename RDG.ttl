@@ -17,7 +17,7 @@ resource:CottageBooking
 
         sswap:hasMapping [
             rdf:type sswap:Subject, request:BookingRequest;
-            request:bookerName "" ;
+            request:booker_name "" ;
             request:numberOfPlaces ""^^xsd:int ;
             request:numberOfBedrooms ""^^xsd:int ;
             request:cityName "" ;
@@ -29,7 +29,7 @@ resource:CottageBooking
 
             sswap:mapsTo [
                 rdf:type sswap:Object, cot:BookingCottage ;
-                cot:bookerName "" ;
+                cot:booker_name "" ;
                 cot:hasBookingID "" ;
                 cot:hasCottage [
                     rdf:type cot:Cottage ;

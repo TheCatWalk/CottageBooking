@@ -2,11 +2,10 @@ from datetime import timedelta, datetime
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse
 from rdf_operations import load_rdf_data, parse_rig, execute_sparql_query
-from rdflib import Graph
+from rdflib import Graph, URIRef, Literal, BNode, Namespace, RDF
+from rdflib.namespace import XSD
 import uvicorn
 import uuid
-
-
 
 app = FastAPI()
 ontology = load_rdf_data("new.rdf")  # Ensure this loads your RDF database
@@ -49,7 +48,6 @@ async def search_cottages(
         startDate: str = Form(...),
         duration: int = Form(...),
         maxShiftDays: int = Form(...)):
-
     results = execute_sparql_query(
         ontology, booker_name, numberOfPlaces, numberOfBedrooms, distanceFromLake,
         cityName, distanceFromCity, startDate, duration, maxShiftDays
@@ -57,6 +55,9 @@ async def search_cottages(
     response_html = "<h2>Search Results</h2>"
     index = 1  # Initialize an index counter
     for row in results:
+        print("Row structure:", row)
+        # Extract details from the tuple
+        cottage_uri, address, num_places, num_bedrooms, distance_lake, city_name, image_url, start_date, end_date, distance_city = row
         start_date_obj = datetime.strptime(startDate, '%Y-%m-%d')
         user_start_date = start_date_obj - timedelta(days=maxShiftDays)
         user_end_date = start_date_obj + timedelta(days=maxShiftDays)
@@ -72,8 +73,10 @@ async def search_cottages(
                 response_html += f"<p>Booker Name: {booker_name}</p>"
                 response_html += f"<p>Booking Number: {booking_number}</p>"
                 # Display the image using the image URL
-                if 'hasImageURL' in row and row['hasImageURL']:
-                    response_html += f'<p>Image: <img src="{row["hasImageURL"]}" alt="Cottage Image" style="width:100px;height:100px;"></p>'
+                if image_url:
+                    response_html += f'<p>Image: <img src="{str(image_url)}" alt="Cottage Image" style="width:100px;height:100px;"></p>'
+                else:
+                    response_html += f"<p>No Image</p>"
                 response_html += f"<p>Address: {row['hasAddress']}</p>"
                 response_html += f"<p>Number of Places: {row['numberOfPlaces']}</p>"
                 response_html += f"<p>Number of Bedrooms: {row['numberOfBedrooms']}</p>"
@@ -93,7 +96,6 @@ async def search_cottages(
 
     return HTMLResponse(content=response_html)
 
-
 @app.post("/invoke")
 async def invoke_service(request: Request):
     # Read the incoming RIG data
@@ -107,13 +109,35 @@ async def invoke_service(request: Request):
     # Use parsed parameters to query the RDF database
     results = execute_sparql_query(ontology, **parsed_params)
 
-    # TODO: Generate RRG based on results
-    # This will be implemented in the next step
+    # Initialize an RDF graph for the RRG
+    rrg_graph = Graph()
 
-    return {"status": "success", "results": results}
+    # Define namespaces and URIs (adjust as per your ontology and RDG structure)
+    COT = Namespace("http://users.jyu.fi/~kumapmxw/cottage-ontology.owl#")
+    SSWAP = Namespace("http://sswapmeet.sswap.info/sswap/")
+    RESPONSE = Namespace("http://example.org/response/")
 
+    # Iterate over the query results and add them to the RRG graph
+    for row in results:
+        # Create a new node for each cottage response
+        cottage_response = BNode()
 
+        # Add relevant triples for this response
+        rrg_graph.add((cottage_response, RDF.type, RESPONSE.CottageResponse))
+        rrg_graph.add((cottage_response, COT.hasAddress, Literal(row['hasAddress'])))
+        rrg_graph.add((cottage_response, COT.numberOfPlaces, Literal(row['numberOfPlaces'], datatype=XSD.integer)))
+        rrg_graph.add((cottage_response, COT.numberOfBedrooms, Literal(row['numberOfBedrooms'], datatype=XSD.integer)))
+        rrg_graph.add((cottage_response, COT.distanceFromLake, Literal(row['distanceFromLake'], datatype=XSD.float)))
+        rrg_graph.add((cottage_response, COT.cityName, Literal(row['cityName'])))
+        rrg_graph.add((cottage_response, COT.hasImageURL, URIRef(row['hasImageURL'])))
+        rrg_graph.add((cottage_response, COT.startDate, Literal(row['startDate'], datatype=XSD.date)))
+        rrg_graph.add((cottage_response, COT.endDate, Literal(row['endDate'], datatype=XSD.date)))
+        rrg_graph.add((cottage_response, COT.distanceFromCity, Literal(row['distanceFromCity'], datatype=XSD.float)))
+
+    # Serialize the graph to Turtle format
+    rrg_data = rrg_graph.serialize(format="turtle")
+
+    return {"status": "success", "rrg": rrg_data}
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
-

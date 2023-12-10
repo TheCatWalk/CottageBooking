@@ -9,6 +9,7 @@ def load_rdf_data(file_path):
     graph.parse(file_path, format="turtle")
     return graph
 
+
 def calculate_date_range(start_date_str, shift_days_str):
     """Calculate the range of dates around a start date based on shift days."""
     shift_days = int(shift_days_str)  # Convert shift_days from string to integer
@@ -17,7 +18,9 @@ def calculate_date_range(start_date_str, shift_days_str):
     start_date_latest = start_date + timedelta(days=shift_days)
     return start_date_earliest.strftime('%Y-%m-%d'), start_date_latest.strftime('%Y-%m-%d')
 
-def execute_sparql_query(graph, bookerName, numberOfPlaces, numberOfBedrooms, cityName, distanceFromCity, distanceFromLake, startDate, duration, shift):
+
+def execute_sparql_query(graph, booker_name, numberOfPlaces, numberOfBedrooms, distanceFromLake, cityName,
+                         distanceFromCity, startDate, duration, maxShiftDays):
     sparql_query = f"""
         PREFIX cot: <http://users.jyu.fi/~kumapmxw/cottage-ontology.owl#>
         PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
@@ -43,12 +46,27 @@ def execute_sparql_query(graph, bookerName, numberOfPlaces, numberOfBedrooms, ci
         }}
     """
     results = graph.query(sparql_query)
+    print("Raw SPARQL results:", list(results))
     filtered_results = []
 
+    # Debugging: Print received parameters
+    print("Received parameters for SPARQL query:")
+    print(f"Booker Name: {booker_name}, Number of Places: {numberOfPlaces}, Number of Bedrooms: {numberOfBedrooms}, "
+          f"Distance From Lake: {distanceFromLake}, City Name: {cityName}, Distance From City: {distanceFromCity}, "
+          f"Start Date: {startDate}, Duration: {duration}, Max Shift Days: {maxShiftDays}")
+
     # Adjusting the logic to use startDate and shift from the RIG
-    start_date_obj = datetime.strptime(startDate, '%Y-%m-%dT%H:%M:%S')
-    user_start_date = start_date_obj - timedelta(days=shift)
-    user_end_date = start_date_obj + timedelta(days=shift)
+    try:
+        start_date_obj = datetime.strptime(startDate, '%Y-%m-%d')
+    except TypeError as e:
+        print(f"Error parsing startDate: {e}")
+        start_date_obj = datetime.now()  # Fallback to current date if parsing fails
+    except ValueError as e:
+        print(f"Invalid startDate format: {e}")
+        start_date_obj = datetime.now()  # Fallback to current date if parsing fails
+
+    user_start_date = start_date_obj - timedelta(days=maxShiftDays)
+    user_end_date = start_date_obj + timedelta(days=maxShiftDays)
 
     for row in results:
         cottage_start_date = datetime.strptime(row['startDate'], '%Y-%m-%d')
@@ -65,20 +83,28 @@ def parse_rig(rig_graph):
     COT = Namespace("http://users.jyu.fi/~kumapmxw/cottage-ontology.owl#")
     SSWAP = Namespace("http://sswapmeet.sswap.info/sswap/")
     REQUEST = Namespace("http://example.org/request/")
+    RESPONSE = Namespace("http://example.org/response/")
 
     # Find the request node in the RIG
     request_node = rig_graph.value(predicate=RDF.type, object=REQUEST.BookingRequest, any=False)
 
+    # Debugging: Print the entire graph for inspection
+    print("RIG Graph:", rig_graph.serialize(format="turtle"))
+
     # Extract parameters from the RIG
-    params = {
-        'bookerName': str(rig_graph.value(subject=request_node, predicate=REQUEST.bookerName)),
-        'numberOfPlaces': int(rig_graph.value(subject=request_node, predicate=REQUEST.numberOfPlaces)),
-        'numberOfBedrooms': int(rig_graph.value(subject=request_node, predicate=REQUEST.numberOfBedrooms)),
-        'cityName': str(rig_graph.value(subject=request_node, predicate=REQUEST.cityName)),
-        'distanceFromCity': int(rig_graph.value(subject=request_node, predicate=REQUEST.distanceFromCity)),
-        'distanceFromLake': int(rig_graph.value(subject=request_node, predicate=REQUEST.distanceFromLake)),
-        'startDate': str(rig_graph.value(subject=request_node, predicate=REQUEST.startDate)),
-        'duration': int(rig_graph.value(subject=request_node, predicate=REQUEST.duration)),
-        'shift': int(rig_graph.value(subject=request_node, predicate=REQUEST.shift))
-    }
-    return params
+    try:
+        params = {
+            'booker_name': str(rig_graph.value(subject=request_node, predicate=REQUEST.booker_name) or ""),
+            'numberOfPlaces': int(rig_graph.value(subject=request_node, predicate=REQUEST.numberOfPlaces) or 0),
+            'numberOfBedrooms': int(rig_graph.value(subject=request_node, predicate=REQUEST.numberOfBedrooms) or 0),
+            'cityName': str(rig_graph.value(subject=request_node, predicate=REQUEST.cityName) or ""),
+            'distanceFromCity': float(rig_graph.value(subject=request_node, predicate=REQUEST.distanceFromCity) or 0.0),
+            'distanceFromLake': float(rig_graph.value(subject=request_node, predicate=REQUEST.distanceFromLake) or 0.0),
+            'startDate': str(rig_graph.value(subject=request_node, predicate=REQUEST.startDate) or ""),
+            'duration': int(rig_graph.value(subject=request_node, predicate=REQUEST.duration) or 0),
+            'maxShiftDays': int(rig_graph.value(subject=request_node, predicate=REQUEST.maxShiftDays) or 0)
+        }
+        return params
+    except Exception as e:
+        print(f"Error parsing RIG: {e}")
+        raise e

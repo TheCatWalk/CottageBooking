@@ -1,4 +1,4 @@
-from rdflib import Graph, Literal, Namespace, URIRef
+from rdflib import Graph, Literal, Namespace, URIRef, RDF
 from rdflib.namespace import RDF
 from datetime import datetime, timedelta
 import re
@@ -10,13 +10,13 @@ def load_rdf_data(file_path):
     return graph
 
 
-def calculate_date_range(start_date_str, shift_days_str):
-    """Calculate the range of dates around a start date based on shift days."""
-    shift_days = int(shift_days_str)  # Convert shift_days from string to integer
-    start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
-    start_date_earliest = start_date - timedelta(days=shift_days)
-    start_date_latest = start_date + timedelta(days=shift_days)
-    return start_date_earliest.strftime('%Y-%m-%d'), start_date_latest.strftime('%Y-%m-%d')
+# def calculate_date_range(start_date_str, shift_days_str):
+#     """Calculate the range of dates around a start date based on shift days."""
+#     shift_days = int(shift_days_str)  # Convert shift_days from string to integer
+#     start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+#     start_date_earliest = start_date - timedelta(days=shift_days)
+#     start_date_latest = start_date + timedelta(days=shift_days)
+#     return start_date_earliest.strftime('%Y-%m-%d'), start_date_latest.strftime('%Y-%m-%d')
 
 
 def execute_sparql_query(graph, booker_name, numberOfPlaces, numberOfBedrooms, distanceFromLake, cityName,
@@ -80,10 +80,7 @@ def execute_sparql_query(graph, booker_name, numberOfPlaces, numberOfBedrooms, d
 
 def parse_rig(rig_graph):
     # Define the namespaces based on RDG.ttl and new.rdf
-    COT = Namespace("http://users.jyu.fi/~kumapmxw/cottage-ontology.owl#")
-    SSWAP = Namespace("http://sswapmeet.sswap.info/sswap/")
     REQUEST = Namespace("http://example.org/request/")
-    RESPONSE = Namespace("http://example.org/response/")
 
     # Find the request node in the RIG
     request_node = rig_graph.value(predicate=RDF.type, object=REQUEST.BookingRequest, any=False)
@@ -93,17 +90,44 @@ def parse_rig(rig_graph):
 
     # Extract parameters from the RIG
     try:
+        # Initialize parameters dictionary
         params = {
-            'booker_name': str(rig_graph.value(subject=request_node, predicate=REQUEST.booker_name) or ""),
-            'numberOfPlaces': int(rig_graph.value(subject=request_node, predicate=REQUEST.numberOfPlaces) or 0),
-            'numberOfBedrooms': int(rig_graph.value(subject=request_node, predicate=REQUEST.numberOfBedrooms) or 0),
-            'cityName': str(rig_graph.value(subject=request_node, predicate=REQUEST.cityName) or ""),
-            'distanceFromCity': float(rig_graph.value(subject=request_node, predicate=REQUEST.distanceFromCity) or 0.0),
-            'distanceFromLake': float(rig_graph.value(subject=request_node, predicate=REQUEST.distanceFromLake) or 0.0),
-            'startDate': str(rig_graph.value(subject=request_node, predicate=REQUEST.startDate) or ""),
-            'duration': int(rig_graph.value(subject=request_node, predicate=REQUEST.duration) or 0),
-            'maxShiftDays': int(rig_graph.value(subject=request_node, predicate=REQUEST.maxShiftDays) or 0)
+            'booker_name': '',
+            'numberOfPlaces': 0,
+            'numberOfBedrooms': 0,
+            'cityName': '',
+            'distanceFromCity': 0.0,
+            'distanceFromLake': 0.0,
+            'startDate': '',
+            'duration': 0,
+            'maxShiftDays': 0
         }
+
+        # Iterate over the triples in the graph
+        for s, p, o in rig_graph:
+            if p == REQUEST.booker_name:
+                params['booker_name'] = str(o)
+            elif p == REQUEST.numberOfPlaces:
+                params['numberOfPlaces'] = int(o)
+            elif p == REQUEST.numberOfBedrooms:
+                params['numberOfBedrooms'] = int(o)
+            elif p == REQUEST.cityName:
+                params['cityName'] = str(o)
+            elif p == REQUEST.distanceFromCity:
+                params['distanceFromCity'] = float(o)
+            elif p == REQUEST.distanceFromLake:
+                params['distanceFromLake'] = float(o)
+            elif p == REQUEST.startDate:
+                params['startDate'] = str(o)
+            elif p == REQUEST.duration:
+                params['duration'] = int(o)
+            elif p == REQUEST.maxShiftDays:
+                params['maxShiftDays'] = int(o)
+
+        # Debug: Print extracted parameters
+        print("Extracted Parameters:")
+        print(params)
+
         return params
     except Exception as e:
         print(f"Error parsing RIG: {e}")

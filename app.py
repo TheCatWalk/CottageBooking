@@ -10,6 +10,7 @@ import uuid
 app = FastAPI()
 ontology = load_rdf_data("new.rdf")  # Ensure this loads your RDF database
 
+
 @app.get("/", response_class=HTMLResponse)
 async def get_search_form():
     html_content = """
@@ -96,15 +97,37 @@ async def search_cottages(
 
     return HTMLResponse(content=response_html)
 
+# # Load RDG.ttl
+# rdg_graph = load_rdg_data("RDG.ttl")
+#
+# @app.post("/invoke")
+# async def invoke_service(request: Request):
+#     rig_data = await request.body()
+#     rig_graph = Graph().parse(data=rig_data, format="turtle")
+#
+#     # Validate RIG against RDG structure
+#     request_node = rdg_graph.value(predicate=RDF.type, object=REQUEST.BookingRequest, any=False)
+#     if not request_node:
+#         return {"status": "error", "message": "Invalid RIG format"}
+
+
+
 @app.post("/invoke")
 async def invoke_service(request: Request):
     # Read the incoming RIG data
     rig_data = await request.body()
-    rig_data = rig_data.decode('utf-8')  # Convert bytes to string
+
+    # Debug: Print received RIG data
+    print("Received RIG Data:")
+    print(rig_data)
 
     # Parse the RIG
     rig_graph = Graph().parse(data=rig_data, format="turtle")
     parsed_params = parse_rig(rig_graph)
+
+    # Debug: Print parsed parameters
+    print("Parsed Parameters from RIG:")
+    print(parsed_params)
 
     # Use parsed parameters to query the RDF database
     results = execute_sparql_query(ontology, **parsed_params)

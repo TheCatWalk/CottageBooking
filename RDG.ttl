@@ -25,7 +25,7 @@ resource:CottageBooking
             request:distanceFromLake ""^^xsd:int ;
             request:startDate ""^^xsd:dateTime ;
             request:duration ""^^xsd:int ;
-            request:shift ""^^xsd:int ;
+            request:maxShiftDays ""^^xsd:int ;
 
             sswap:mapsTo [
                 rdf:type sswap:Object, cot:BookingCottage ;

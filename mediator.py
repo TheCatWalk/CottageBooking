@@ -80,17 +80,17 @@ async def mediate_request(request: Request, booking_service_url: str = Form(...)
                 predicate = URIRef(f"http://example.org/request/{key}")
                 rig_graph.add((request_node, predicate, Literal(value)))
 
-        # Debug: Print the RIG for inspection
-        print("Constructed RIG in Mediate:")
-        print(rig_graph.serialize(format="turtle"))
-
+        # Serialize the RIG to Turtle format
         rig_data = rig_graph.serialize(format="turtle")
-        response = requests.post(booking_service_url, data=rig_data, headers={"Content-Type": "text/turtle"})
 
+        # Send RIG to the Cottage Booking service's invoke endpoint
+        response = requests.post(booking_service_url, data=rig_data, headers={"Content-Type": "text/turtle"})
         rdf_data = response.json().get('rrg', '')
+
         if not rdf_data:
             return HTMLResponse(content="No RDF data received from the Cottage Booking service.")
 
+        # Parse the RDF response
         response_graph = Graph().parse(data=rdf_data, format="turtle")
         response_html = "<h2>Mediator Service Output</h2>"
         RESPONSE = Namespace("http://example.org/response/")
@@ -113,36 +113,47 @@ async def mediate_request(request: Request, booking_service_url: str = Form(...)
             current_date = user_start_date
             while current_date <= user_end_date:
                 booking_number = uuid.uuid4()
-                date_label = "Booking Start Date" if current_date == start_date else "Shifted Booking Start Date"
 
-                address = str(response_graph.value(response_node, COT.hasAddress) or "No Address")
-                num_places = str(response_graph.value(response_node, COT.numberOfPlaces) or "Not Specified")
-                num_bedrooms = str(response_graph.value(response_node, COT.numberOfBedrooms) or "Not Specified")
-                image_url = str(response_graph.value(response_node, COT.hasImageURL) or "")
-                city_name = str(response_graph.value(response_node, COT.cityName) or "Not Specified")
-                distance_city = str(response_graph.value(response_node, COT.distanceFromCity) or "Not Specified")
-                distance_lake = str(response_graph.value(response_node, COT.distanceFromLake) or "Not Specified")
+                # Extract start and end dates from the response
+                cottage_start_date_str = str(response_graph.value(response_node, COT.startDate) or "")
+                cottage_end_date_str = str(response_graph.value(response_node, COT.endDate) or "")
+                cottage_start_date = datetime.strptime(cottage_start_date_str, '%Y-%m-%d')
+                cottage_end_date = datetime.strptime(cottage_end_date_str, '%Y-%m-%d')
 
-                response_html += "<div>"
-                response_html += f"<p>Booker Name: {booker_name}</p>"
-                response_html += f"<p>Booking Number: {booking_number}</p>"
-                response_html += f"<p>{date_label}: {current_date.strftime('%Y-%m-%d')}</p>"
-                response_html += f"<p>Booking Period: {duration} days</p>"
-                response_html += f"<p>Address: {address}</p>"
-                response_html += f"<p>Number of Places: {num_places}</p>"
-                response_html += f"<p>Number of Bedrooms: {num_bedrooms}</p>"
-                response_html += f"<p>City: {city_name}</p>"
-                response_html += f"<p>Distance to City: {distance_city}</p>"
-                response_html += f"<p>Distance to Lake: {distance_lake}</p>"
-                if image_url:
-                    response_html += f'<p>Image: <img src="{image_url}" alt="Cottage Image" style="width:100px;height:100px;"></p>'
-                response_html += "</div><hr>"
+                if cottage_start_date <= current_date <= cottage_end_date:
+                    date_label = "Booking Start Date" if current_date == start_date else "Shifted Booking Start Date"
+
+                    # Extract other details from the RDF graph
+                    address = str(response_graph.value(response_node, COT.hasAddress) or "No Address")
+                    num_places = str(response_graph.value(response_node, COT.numberOfPlaces) or "Not Specified")
+                    num_bedrooms = str(response_graph.value(response_node, COT.numberOfBedrooms) or "Not Specified")
+                    image_url = str(response_graph.value(response_node, COT.hasImageURL) or "")
+                    city_name = str(response_graph.value(response_node, COT.cityName) or "Not Specified")
+                    distance_city = str(response_graph.value(response_node, COT.distanceFromCity) or "Not Specified")
+                    distance_lake = str(response_graph.value(response_node, COT.distanceFromLake) or "Not Specified")
+
+                    # Append the details to the HTML content
+                    response_html += "<div>"
+                    response_html += f"<p>Booker Name: {booker_name}</p>"
+                    response_html += f"<p>Booking Number: {booking_number}</p>"
+                    response_html += f"<p>{date_label}: {current_date.strftime('%Y-%m-%d')}</p>"
+                    response_html += f"<p>Booking Period: {duration} days</p>"
+                    response_html += f"<p>Address: {address}</p>"
+                    response_html += f"<p>Number of Places: {num_places}</p>"
+                    response_html += f"<p>Number of Bedrooms: {num_bedrooms}</p>"
+                    response_html += f"<p>City: {city_name}</p>"
+                    response_html += f"<p>Distance to City: {distance_city} km</p>"
+                    response_html += f"<p>Distance to Lake: {distance_lake} m</p>"
+                    if image_url:
+                        response_html += f'<p>Image: <img src="{image_url}" alt="Cottage Image" style="width:100px;height:100px;"></p>'
+                    response_html += "</div><hr>"
 
                 current_date += timedelta(days=1)
 
         return HTMLResponse(content=response_html)
     except Exception as e:
         return HTMLResponse(content=f"An error occurred: {str(e)}", status_code=500)
+
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,0 +1,39 @@
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sswap: <http://sswapmeet.sswap.info/sswap/> .
+@prefix resource: <http://http://localhost:5000/cottageServices/> .
+@prefix cottage: <http://localhost:5000/cottage/> .
+
+resource:getAvailableCottage rdfs:type sswap:Resource, cottage:CottageCheckService;
+    sswap:providedBy resource:resourceProvider;
+    sswap:name "Cottage Check Service";
+    sswap:oneLineDescription "A service to check all available cottages";
+    sswap:operatesOn [
+        rdfs:type sswap:Graph;
+        sswap:hasMapping [
+            rdfs:type sswap:Subject, cottage:CottageInfo;
+            cottage:bookerName ""^^xsd:string;
+            cottage:startDate ""^^xsd:string;
+            cottage:numDays ""^^xsd:integer;
+            cottage:maxDateShift ""^^xsd:integer;
+            cottage:numPeople ""^^xsd:integer;
+            cottage:numBedrooms ""^^xsd:integer;
+            cottage:nearestCity ""^^xsd:string;
+            cottage:maxLakeDistance ""^^xsd:integer;
+            cottage:maxCityDistance ""^^xsd:integer;
+            sswap:mapsTo [
+                rdfs:type sswap:Object, cottage:Offers;
+                cottage:cottageName ""^^xsd:string;
+                cottage:bookerName ""^^xsd:string;
+                cottage:bookingNum ""^^xsd:string;
+                cottage:address ""^^xsd:string;
+                cottage:image ""^^xsd:string;
+                cottage:numPlaces ""^^xsd:integer;
+                cottage:numBedrooms ""^^xsd:integer;
+                cottage:lakeDistance ""^^xsd:string ;
+                cottage:nearestCity ""^^xsd:string ;
+                cottage:startDate ""^^xsd:dateTime ;
+                cottage:endDate ""^^xsd:dateTime ;
+            ]
+        ]
+    ].

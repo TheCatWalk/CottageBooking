@@ -1,0 +1,56 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sswap: <http://sswapmeet.sswap.info/sswap/> .
+@prefix cottageOnt: <http://www.example.org/cottages#> .
+@prefix resource: <http://www.example.org/cottageServiceSSWAP/> .
+
+resource:cottageBookingResource a sswap:Resource , cottageOnt:MyCottageBookingService ;
+    sswap:providedBy resource:resourceProvider ;
+
+    sswap:name "Cottage Booking Service" ;
+    sswap:oneLineDescription "A service to book cottages " ;
+
+    sswap:operatesOn [
+        a sswap:Graph ;
+        sswap:hasMapping [
+            a sswap:Subject , cottageOnt:Request ;
+
+            cottageOnt:bookerName ""^^xsd:string ;
+            cottageOnt:bookingRequiredDays "0"^^xsd:integer ;
+            cottageOnt:bookingStartDate "1970-01-01T00:00:00"^^xsd:dateTime ;
+            cottageOnt:bookingStartDayShift "0"^^xsd:integer ;
+            cottageOnt:hasBedrooms "0"^^xsd:integer ;
+            cottageOnt:hasCityName ""^^xsd:string ;
+            cottageOnt:hasDistanceToCity "0"^^xsd:double ;
+            cottageOnt:hasDistanceToLake "0"^^xsd:double ;
+            cottageOnt:hasPlaces "0"^^xsd:integer ;
+
+            sswap:mapsTo [
+                a sswap:Object, cottageOnt:BookingOffer;
+
+                cottageOnt:bookerName ""^^xsd:string ;
+                cottageOnt:hasBookingId ""^^xsd:string ;
+                cottageOnt:bookingEndDate "1970-01-01T00:00:00"^^xsd:dateTime ;
+                cottageOnt:bookingStartDate "1970-01-01T00:00:00"^^xsd:dateTime ;
+                cottageOnt:hasCottage [
+                    a cottageOnt:Cottage ;
+                    cottageOnt:isLocatedInCity [
+                        a cottageOnt:City ;
+                        cottageOnt:hasName ""^^xsd:string ;
+                    ] ;
+                    cottageOnt:hasAddress ""^^xsd:string ;
+                    cottageOnt:hasBedrooms "0"^^xsd:integer ;
+                    cottageOnt:hasDistanceToCity "0"^^xsd:double ;
+                    cottageOnt:hasDistanceToLake "0"^^xsd:double ;
+                    cottageOnt:hasImageURL ""^^xsd:string ;
+                    cottageOnt:hasPlaces "0"^^xsd:integer ;
+                ]
+
+            ]
+        ]
+    ] .
+
+resource:resourceProvider a sswap:Provider ;
+    sswap:name "Cottage Service Resource Provider" ;
+    sswap:providesResource resource:CottageBookingResource .

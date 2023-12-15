@@ -21,7 +21,7 @@ def fetch_rdg_data(url):
         return None
 
 def extract_properties_rdg0():
-    with open('rdg0.ttl', 'r') as file:
+    with open('RDG.ttl', 'r') as file:
         content = file.read()
         # Extract properties and flatten the tuple structure
         properties = re.findall(r'\brequest:(\w+)|\bcot:(\w+)', content)
@@ -53,7 +53,7 @@ def compare_with_other_ontologies(ontology0_properties, other_ontology):
     return comparison_results
 
 # Endpoint for alignment
-@mediator_app.post("/perform_alignment")
+@mediator_app.post("/perform_alignment", response_class=HTMLResponse)
 async def perform_alignment(rdg_url: str = Form(...)):
     rdg_data = fetch_rdg_data(rdg_url)
     if not rdg_data:
@@ -75,9 +75,13 @@ async def perform_alignment(rdg_url: str = Form(...)):
         return HTMLResponse(content="<p>No alignment results found.</p>")
 
     response_html = "<h2>Alignment Results</h2>"
-    for prop0, (prop, similarity) in alignment_results.items():
-        response_html += f"<p>Alignment: '{prop0}' (RDG0) <-> '{prop}' (Other RDG), Highest Similarity: {similarity:.2f}</p>"
+    response_html += "<table border='1'>"
+    response_html += "<tr><th>Query Parameters (RDG0)</th><th>End Parameters (Other RDG)</th><th>Similarity Score</th></tr>"
 
+    for prop0, (prop, similarity) in alignment_results.items():
+        response_html += f"<tr><td>{prop0}</td><td>{prop if prop else 'N/A'}</td><td>{similarity:.2f}</td></tr>"
+
+    response_html += "</table>"
     return HTMLResponse(content=response_html)
 
 

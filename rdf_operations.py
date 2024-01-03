@@ -66,7 +66,7 @@ def execute_sparql_query(graph, booker_name, numberOfPlaces, numberOfBedrooms, d
                 'startDate': row['startDate'],
                 'endDate': row['endDate'],
                 'distanceFromCity': row['distanceFromCity'],
-                'calculated_duration': available_duration  # Add calculated duration
+                'available_duration': available_duration  # Add calculated duration
             }
             filtered_results.append(row_data)
 

@@ -1,0 +1,40 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix c: <http://users.jyu.fi/~mialkokk/ties4520/cottages.owl#> .
+@prefix sswap: <http://sswapmeet.sswap.info/sswap/> .
+
+c:bookingService
+    rdf:type sswap:Resource, c:BookingsService ;
+    sswap:providedBy c:resourceProvider ;
+    sswap:name "Cottage booking service" ;
+    sswap:oneLineDescription "A service to fetch bookable cottages" ;
+    sswap:operatesOn [
+        rdf:type sswap:Graph ;
+        sswap:hasMapping [
+            rdf:type sswap:Subject, c:BookingServiceRequest;
+            c:hasBookerName "" ;
+            c:nearestCity "" ;
+            c:cityDistance ""^^xsd:int ;
+            c:hasBedrooms ""^^xsd:int ;
+            c:hasBeds ""^^xsd:int ;
+            c:lakeDistance ""^^xsd:int ;
+            c:startsAt ""^^xsd:dateTime ;
+            c:days ""^^xsd:dateTime ;
+            c:maxShiftDays ""^^xsd:int ;
+            sswap:mapsTo [
+                rdf:type sswap:Object, c:BookingServiceResponse;
+                c:hasBookerName "" ;
+                c:hasBeds ""^^xsd:int ;
+                c:hasCottageAddress "" ;
+                c:nearestCity "" ;
+                c:lakeDistance ""^^xsd:int ;
+                c:hasBedrooms ""^^xsd:int ;
+                c:cityDistance ""^^xsd:int ;
+                c:hasImage "" ;
+                c:hasBookingNumber "" ;
+                c:startsAt ""^^xsd:dateTime ;
+                c:endsAt ""^^xsd:dateTime
+            ]
+        ]
+] .

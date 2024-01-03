@@ -1,0 +1,52 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sswap: <http://sswapmeet.sswap.info/sswap/> .
+@prefix cot: <http://localhost:8080/SSWAP_CottageBookingService/cottageOntology/> .  
+@prefix resource: <http://localhost:8080/SSWAP_CottageBookingService/> . 
+
+
+resource:getCottageBookingService
+	rdf:type sswap:Resource ,
+			cot:CottageBookingService;
+			
+	sswap:providedBy resource:resourceProvider ;
+	sswap:name "Cottage Booking Service" ;
+	sswap:oneLineDescription "A service that returns a set of bookings for cottages“ ;
+	
+	sswap:operatesOn [
+		rdf:type sswap:Graph ;
+		sswap:hasMapping [
+			rdf:type sswap:Subject, cot:Booking ;
+			cot:bookedBy "" ;
+			cot:bookingStartDate ""^^xsd:date ;
+			cot:bookingDuration  ""^^xsd:integer ;
+			cot:maxShift ""^^xsd:integer ;
+			
+			rdf:type cot:Cottage ; 
+			cot:hasPlaces ""^^xsd:integer ;
+			cot:hasBedrooms ""^^xsd:integer ;
+			cot:distanceToLake ""^^xsd:integer ; 
+			cot:nearestCity "" ;
+			cot:distanceToCity ""^^xsd:float ; 
+			
+			sswap:mapsTo [
+				rdf:type sswap:Object, cot:Cottage ;
+				cot:hasAddress "" ;
+				cot:hasImage "" ;
+				cot:hasPlaces ""^^xsd:integer ;
+				cot:hasBedrooms ""^^xsd:integer ;
+				cot:distanceToLake ""^^xsd:integer ; 
+				cot:nearestCity "" ;
+				cot:distanceToCity ""^^xsd:float ; 
+				
+				rdf:type cot:Booking ;
+				cot:bookingNumber ""^^xsd:integer ;
+				cot:bookedBy "" ;
+				cot:bookingStartDate ""^^xsd:date ;
+				cot:bookingEndDate ""^^xsd:date ;
+			]
+		]
+	].
+

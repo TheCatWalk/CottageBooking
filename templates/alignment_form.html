@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ontology Alignment</title>
+</head>
+<body>
+<h2>Align Ontology</h2>
+<form action="/perform_alignment" method="post">
+    URL of RDG to align with: <input type="text" name="rdg_url"><br>
+    <input type="submit" value="Align">
+</form>
+{% if message %}
+<p>{{ message }}</p>
+{% endif %}
+</body>
+</html>
